@@ -35,12 +35,15 @@ void MiniPID::init(){
 	minOutput=0;
 	setpoint=0;
 	lastActual=0;
+	lastSetpoint=0;
 	firstRun=true;
 	reversed=false;
+	useDt=false;
 	outputRampRate=0;
 	lastOutput=0;
 	outputFilter=0;
 	setpointRange=0;
+	dt=0;
 }
 
 //**********************************
@@ -168,11 +171,18 @@ void MiniPID::setDirection(bool reversed){
 	checkSigns();
 }
 
+/** Set the desired differential part calculation
+ * @param useDt Set true to calculate time derivative
+ */
+void MiniPID::useDeltaTime(bool useDt){
+	this->useDt=useDt;
+}
+
 //**********************************
 //Primary operating functions
 //**********************************
 
-/**Set the target for the PID calculations
+/** Set the target for the PID calculations
  * @param setpoint
  */
 void MiniPID::setSetpoint(double setpoint){
@@ -213,6 +223,7 @@ double MiniPID::getOutput(double actual, double setpoint){
 	//For last output, we can assume it's the current time-independent outputs. 
 	if(firstRun){
 		lastActual=actual;
+		lastSetpoint=setpoint;
 		lastOutput=Poutput+Foutput;
 		firstRun=false;
 	}
@@ -222,8 +233,14 @@ double MiniPID::getOutput(double actual, double setpoint){
 	//Note, this->is negative. this->actually "slows" the system if it's doing
 	//the correct thing, and small values helps prevent output spikes and overshoot 
 
-	Doutput= -D*(actual-lastActual);
-	lastActual=actual;
+	if(useDt && (dt > 0)){
+		Doutput= D*((setpoint-lastSetpoint) - (actual-lastActual)) / dt;
+		lastActual=actual;
+		lastSetpoint=setpoint;
+	} else{
+		Doutput= -D*(actual-lastActual);
+		lastActual=actual;
+	}
 
 
 
@@ -326,6 +343,13 @@ void MiniPID::setOutputFilter(double strength){
 	if(strength==0 || bounded(strength,0,1)){
 		outputFilter=strength;
 	}
+}
+
+/**
+ * Sets the delta time between each iteration.
+ */
+void MiniPID::setDt(double dt){
+	this->dt=dt;
 }
 
 //**************************************
