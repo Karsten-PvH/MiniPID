@@ -243,7 +243,6 @@ double MiniPID::getOutput(double actual, double setpoint){
 	}
 
 
-
 	//The Iterm is more complex. There's several things to factor in to make it easier to deal with.
 	// 1. maxIoutput restricts the amount of output contributed by the Iterm.
 	// 2. prevent windup by not increasing errorSum if we're already running against our max Ioutput
@@ -255,6 +254,17 @@ double MiniPID::getOutput(double actual, double setpoint){
 
 	//And, finally, we can just add the terms up
 	output=Foutput + Poutput + Ioutput + Doutput;
+
+	// To synchronize two motors we are using this->positionDiff
+	// if this->positionDiff is positive this means we need to reduce output and vice versa
+	// if output is negative we need to add
+	//output = output + (sgn(output) * -1.0 * this->positionDiff * maxOutput*0.05);
+
+	float posOutputFilter = 0.35;
+	double POSOutput = clamp(this->positionDiff, -5.0, 5.0) * maxOutput*0.01;
+	double POSOutputFiltered=POSOutput*posOutputFilter+POSOutput*(1-posOutputFilter);
+	output = output - POSOutputFiltered;
+
 
 	//Figure out what we're doing with the error.
 	if(minOutput!=maxOutput && !bounded(output, minOutput,maxOutput) ){
@@ -350,6 +360,14 @@ void MiniPID::setOutputFilter(double strength){
  */
 void MiniPID::setDt(double dt){
 	this->dt=dt;
+}
+
+/**
+ * Sets the position diff where the PID needs to be reduced with to synchronize two controllers.
+ */
+void MiniPID::setPositionDiff(double _positionDiff)
+{
+	this->positionDiff = _positionDiff;
 }
 
 //**************************************

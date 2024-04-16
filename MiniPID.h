@@ -1,6 +1,10 @@
 #ifndef MINIPID_H
 #define MINIPID_H
 
+template <typename T> int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
 class MiniPID{
 public:
 	MiniPID(double, double, double);
@@ -20,6 +24,7 @@ public:
 	void setOutputRampRate(double);
 	void setSetpointRange(double);
 	void setOutputFilter(double);
+	void setPositionDiff(double);
 	void setDt(double);
 	void useDeltaTime(bool);
 	double getOutput();
@@ -41,6 +46,8 @@ private:
 	double maxError;
 	double errorSum;
 
+	double positionDiff;
+	
 	double maxOutput; 
 	double minOutput;
 
