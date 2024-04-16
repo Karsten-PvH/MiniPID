@@ -165,6 +165,7 @@ void MiniPID::setOutputLimits(double minimum,double maximum){
  */
 void MiniPID::setDirection(bool reversed){
 	this->reversed=reversed;
+	checkSigns();
 }
 
 //**********************************
